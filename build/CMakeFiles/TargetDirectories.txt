@@ -1,3 +1,0 @@
-C:/Users/Admin/Projects/terrain-editor/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/Admin/Projects/terrain-editor/build/CMakeFiles/ZERO_CHECK.dir
-C:/Users/Admin/Projects/terrain-editor/build/src/CMakeFiles/game.dir
