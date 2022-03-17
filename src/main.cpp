@@ -27,11 +27,10 @@ static constexpr auto NUM_STRIPS          = HEIGHT_MAP_HEIGHT - 1;
 static constexpr auto NUM_VERTS_PER_STRIP = HEIGHT_MAP_WIDTH * 2;
 
 // camera
-static auto camera           = Camera({0.0f, 3.0f, 10.0f}, {0.0f, 1.0f, 0.0f}, -90.f, -20.0f);
-static const auto projection = glm::ortho(-2.f, 2.f, -1.5f, 1.5f, 0.1f, 100.0f);
-// static const auto projection =
-//     glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f,
-//     100.0f);
+static auto camera = Camera({0.0f, 3.0f, 10.0f}, {0.0f, 1.0f, 0.0f}, -90.f, -20.0f);
+// static const auto projection = glm::ortho(-4.f, 4.f, -3.f, 3.f, 0.1f, 100.0f);
+static const auto projection =
+    glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
 
 float lastX     = SCR_WIDTH / 2.0f;
@@ -160,7 +159,6 @@ int main(int argv, char* argc[]) {
                 NUM_VERTS_PER_STRIP,
                 GL_UNSIGNED_INT,
                 (void*)(sizeof(uint32_t) * NUM_VERTS_PER_STRIP * strip));
-
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
