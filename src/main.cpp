@@ -1,5 +1,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 
+#include <functional>
 #include <iostream>
 
 #include <glad/glad.h>
@@ -18,22 +19,13 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 // settings
 static constexpr auto SCR_WIDTH  = 800;
 static constexpr auto SCR_HEIGHT = 600;
 
-static constexpr auto HEIGHT_MAP_WIDTH  = 800;
-static constexpr auto HEIGHT_MAP_HEIGHT = 600;
-
-// camera
-static auto camera           = Camera({0.0f, 3.0f, 10.0f}, {0.0f, 1.0f, 0.0f}, -90.f, -20.0f);
-static const auto projection = glm::ortho(-4.f, 4.f, -3.f, 3.f, 0.1f, 100.0f);
-// static const auto projection =
-//     glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f,
-//     100.0f);
+static auto mouseCallbacks = std::vector<std::function<void(float, float)>>();
 
 float lastX     = SCR_WIDTH / 2.0f;
 float lastY     = SCR_HEIGHT / 2.0f;
@@ -67,7 +59,6 @@ int main(int argv, char* argc[]) {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -87,17 +78,25 @@ int main(int argv, char* argc[]) {
     glEnable(GL_DEPTH_TEST);
 
     // draw in wireframe
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    Grid grid(HEIGHT_MAP_WIDTH, HEIGHT_MAP_HEIGHT);
+    Camera camera({0.0f, 3.0f, 10.0f}, {0.0f, 1.0f, 0.0f}, -90.f, -20.0f);
+    Cursor cursor(Circle{50, 0.5}, 0.03, {0.79f, 0.071f, 0.13f});
+    Grid grid(800, 600);
+    Shader shader("shaders/default.vs", "shaders/default.fs");
 
-    Shader shader("shaders/heightmap.vs", "shaders/heightmap.fs");
+    auto projection = glm::perspective(
+        glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    // auto projection = glm::ortho(-4.f, 4.f, -3.f, 3.f, 0.1f, 100.0f);
+
     shader.use();
     shader.set("projection", projection);
     shader.set("view", camera.GetViewMatrix());
-    auto model = glm::mat4(1.0f);
-    model      = glm::scale(model, {.25, .25, .25});
-    shader.set("model", model);
+
+    mouseCallbacks.push_back(
+        [&camera](auto xoffset, auto yoffset) { camera.ProcessMouseMovement(xoffset, yoffset); });
+    mouseCallbacks.push_back(
+        [&cursor](auto xoffset, auto yoffset) { cursor.updatePosition(xoffset, yoffset); });
 
     // render loop
     // -----------
@@ -114,7 +113,18 @@ int main(int argv, char* argc[]) {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        shader.set("color", glm::vec3{1.0, 1.0, 1.0});
+        shader.set("model", glm::mat4(1.0f));
         grid.draw(shader);
+
+        glDepthFunc(GL_ALWAYS);
+        auto model = glm::mat4(1.0f);
+        model      = glm::translate(model, cursor.getPosition());
+        model      = glm::rotate(model, glm::radians(90.f), {1.0f, 0.0f, 0.0f});
+        shader.set("model", model);
+        shader.set("color", cursor.getColor());
+        cursor.draw(shader);
+        glDepthFunc(GL_LESS);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -134,15 +144,6 @@ int main(int argv, char* argc[]) {
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
-
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -168,11 +169,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
-}
-
-// glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    camera.ProcessMouseScroll(yoffset);
+    for (auto& callback : mouseCallbacks)
+        callback(xoffset, yoffset);
 }
