@@ -4,27 +4,22 @@
 
 #include <glm/glm.hpp>
 
-template <typename... Types>
-auto& operator<<(std::ostream& os, const glm::vec<1, Types...>& vec) {
+inline auto& operator<<(std::ostream& os, const glm::vec1& vec) {
     os << vec.x;
     return os;
 }
 
-template <typename... Types>
-auto& operator<<(std::ostream& os, const glm::vec<2, Types...>& vec) {
+inline auto& operator<<(std::ostream& os, const glm::vec2& vec) {
     os << vec.x << " " << vec.y;
     return os;
 }
 
-template <typename... Types>
-auto& operator<<(std::ostream& os, const glm::vec<3, Types...>& vec) {
+inline auto& operator<<(std::ostream& os, const glm::vec3& vec) {
     os << vec.x << " " << vec.y << " " << vec.z;
     return os;
 }
 
-
-template <typename... Types>
-auto& operator<<(std::ostream& os, const glm::vec<4, Types...>& vec) {
+inline auto& operator<<(std::ostream& os, const glm::vec4& vec) {
     os << vec.x << " " << vec.y << " " << vec.z << " " << vec.w;
     return os;
 }
