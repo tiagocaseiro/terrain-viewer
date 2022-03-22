@@ -24,8 +24,6 @@ Grid::Grid(int width, int height) : num_strips{height - 1}, num_verts_per_strip{
         }
     }
 
-    uint32_t VAO, VBO, EBO;
-
     glGenVertexArrays(1, &VAO);
 
     glGenBuffers(1, &VBO);
