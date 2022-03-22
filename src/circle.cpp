@@ -12,10 +12,10 @@
 
 Circle::Circle(uint32_t slices, float radius) {
     std::vector<glm::vec3> vertices;
-    vertices.push_back({});
 
     const auto step = 360.f / slices;
 
+    vertices.push_back({});
     for (auto i = 0; i < slices; i++)
         vertices.emplace_back(
             glm::cos(glm::radians(step * i)) * radius,
@@ -54,7 +54,7 @@ Circle::Circle(uint32_t slices, float radius) {
     count = std::size(indices);
 }
 
-void Circle::draw(Shader shader) {
+void Circle::draw(Shader shader) const {
     shader.use();
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLE_FAN, count, GL_UNSIGNED_INT, nullptr);

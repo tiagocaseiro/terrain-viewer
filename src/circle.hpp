@@ -7,7 +7,7 @@ class Shader;
 class Circle {
   public:
     Circle(uint32_t slices, float radius);
-    void draw(Shader shader);
+    void draw(Shader shader) const;
 
   private:
     uint32_t count;
