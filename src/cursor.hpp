@@ -3,8 +3,8 @@
 template <typename Shape>
 class Cursor {
   public:
-    explicit Cursor(Shape shape, float speed = 0.05f, glm::vec3 color = {1.0f, 1.0f, 1.0f})
-      : speed_{speed}, color_{color}, position_{}, shape_{std::move(shape)} {}
+    explicit Cursor(Shape shape, float speed, glm::vec3 color)
+      : speed_{speed}, color_{std::move(color)}, position_{}, shape_{std::move(shape)} {}
 
     void updatePosition(float xoffset, float zoffset) {
         position_.x += (xoffset * speed_);
