@@ -50,8 +50,7 @@ Grid::Grid(int width, int height) : num_strips{height - 1}, num_verts_per_strip{
     glEnableVertexAttribArray(0);
 }
 
-void Grid::draw(Shader shader) {
-    shader.use();
+void Grid::draw() {
     glBindVertexArray(VAO);
     for (auto strip = 0; strip < num_strips; strip++)
         glDrawElements(

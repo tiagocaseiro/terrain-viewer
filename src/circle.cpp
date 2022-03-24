@@ -54,8 +54,7 @@ Circle::Circle(uint32_t slices, float radius) {
     count = std::size(indices);
 }
 
-void Circle::draw(Shader shader) const {
-    shader.use();
+void Circle::draw() const {
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLE_FAN, count, GL_UNSIGNED_INT, nullptr);
 }

@@ -82,8 +82,9 @@ int main(int argv, char* argc[]) {
 
     Camera camera({0.0f, 3.0f, 10.0f}, {0.0f, 1.0f, 0.0f}, -90.f, -20.0f);
     Cursor cursor(Circle{50, 0.5}, 0.03, {0.79f, 0.071f, 0.13f});
-    Grid grid(800, 600);
+    Grid grid(10, 10);
     Shader shader("shaders/default.vs", "shaders/default.fs");
+    Shader wireframe_shader("shaders/default.vs", "shaders/default.fs", "shaders/wireframe.gs");
 
     auto projection = glm::perspective(
         glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -92,6 +93,10 @@ int main(int argv, char* argc[]) {
     shader.use();
     shader.set("projection", projection);
     shader.set("view", camera.GetViewMatrix());
+
+    wireframe_shader.use();
+    wireframe_shader.set("projection", projection);
+    wireframe_shader.set("view", camera.GetViewMatrix());
 
     mouseCallbacks.push_back(
         [&camera](auto xoffset, auto yoffset) { camera.ProcessMouseMovement(xoffset, yoffset); });
@@ -110,20 +115,28 @@ int main(int argv, char* argc[]) {
         processInput(window);
         // render
         // ------
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        shader.use();
         shader.set("color", glm::vec3{1.0, 1.0, 1.0});
         shader.set("model", glm::mat4(1.0f));
-        grid.draw(shader);
+        grid.draw();
 
         glDepthFunc(GL_ALWAYS);
-        auto model = glm::mat4(1.0f);
-        model      = glm::translate(model, cursor.getPosition());
+        wireframe_shader.use();
+        wireframe_shader.set("color", glm::vec3{0.0, 0.0, 0.0});
+        wireframe_shader.set("model", glm::mat4(1.0f));
+        grid.draw();
+        glDepthFunc(GL_LESS);
+
+        glDepthFunc(GL_ALWAYS);
+        shader.use();
+        auto model = glm::translate(glm::mat4(1.0f), cursor.getPosition());
         model      = glm::rotate(model, glm::radians(90.f), {1.0f, 0.0f, 0.0f});
         shader.set("model", model);
         shader.set("color", cursor.getColor());
-        cursor.draw(shader);
+        cursor.draw();
         glDepthFunc(GL_LESS);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

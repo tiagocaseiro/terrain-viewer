@@ -6,7 +6,7 @@ class Shader;
 class Grid {
   public:
     Grid(int width, int height);
-    void draw(Shader shader);
+    void draw();
 
   private:
     int num_strips;

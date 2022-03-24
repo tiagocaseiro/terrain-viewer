@@ -15,7 +15,7 @@ class Cursor {
 
     auto getColor() const { return color_; }
 
-    void draw(Shader shader) const { shape_.draw(shader); }
+    void draw() const { shape_.draw(); }
 
   private:
     float speed_;
