@@ -119,22 +119,22 @@ int main(int argv, char* argc[]) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         shader.use();
-        shader.set("color", glm::vec3{1.0, 1.0, 1.0});
+        shader.set("color", glm::vec3{1.0f});
         shader.set("model", glm::mat4(1.0f));
         grid.draw();
 
         glDepthFunc(GL_ALWAYS);
         wireframe_shader.use();
-        wireframe_shader.set("color", glm::vec3{0.0, 0.0, 0.0});
+        wireframe_shader.set("color", glm::vec3{0.0f});
         wireframe_shader.set("model", glm::mat4(1.0f));
         grid.draw();
         glDepthFunc(GL_LESS);
 
         glDepthFunc(GL_ALWAYS);
         shader.use();
-        auto model = glm::translate(glm::mat4(1.0f), cursor.getPosition());
-        model      = glm::rotate(model, glm::radians(90.f), {1.0f, 0.0f, 0.0f});
-        shader.set("model", model);
+        auto cursor_model = glm::translate(glm::mat4(1.0f), cursor.getPosition());
+        cursor_model      = glm::rotate(cursor_model, glm::radians(90.f), {1.0f, 0.0f, 0.0f});
+        shader.set("model", cursor_model);
         shader.set("color", cursor.getColor());
         cursor.draw();
         glDepthFunc(GL_LESS);
