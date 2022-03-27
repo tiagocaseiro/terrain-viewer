@@ -14,18 +14,21 @@
 #include "learnopengl/shader.hpp"
 
 #include "circle.hpp"
+#include "common.hpp"
 #include "cursor.hpp"
 #include "grid.hpp"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void processInput(GLFWwindow* window);
 
 // settings
 static constexpr auto SCR_WIDTH  = 800;
 static constexpr auto SCR_HEIGHT = 600;
 
-static auto mouseCallbacks = std::vector<std::function<void(float, float)>>();
+static auto mouseCallbacks       = std::vector<std::function<void(float, float)>>();
+static auto mouseButtonCallbacks = std::vector<std::function<void(int, int)>>();
 
 float lastX     = SCR_WIDTH / 2.0f;
 float lastY     = SCR_HEIGHT / 2.0f;
@@ -59,6 +62,7 @@ int main(int argv, char* argc[]) {
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -86,6 +90,8 @@ int main(int argv, char* argc[]) {
     Shader shader("shaders/default.vs", "shaders/default.fs");
     Shader wireframe_shader("shaders/default.vs", "shaders/default.fs", "shaders/wireframe.gs");
 
+    cursor.setOnLeftClick([&grid, &cursor]() { auto position = cursor.getPosition(); });
+
     auto projection = glm::perspective(
         glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     // auto projection = glm::ortho(-4.f, 4.f, -3.f, 3.f, 0.1f, 100.0f);
@@ -98,10 +104,13 @@ int main(int argv, char* argc[]) {
     wireframe_shader.set("projection", projection);
     wireframe_shader.set("view", camera.GetViewMatrix());
 
-    mouseCallbacks.push_back(
-        [&camera](auto xoffset, auto yoffset) { camera.ProcessMouseMovement(xoffset, yoffset); });
-    mouseCallbacks.push_back(
-        [&cursor](auto xoffset, auto yoffset) { cursor.updatePosition(xoffset, yoffset); });
+    mouseCallbacks.push_back([&camera](auto... args) { camera.ProcessMouseMovement(args...); });
+    mouseCallbacks.push_back([&cursor](auto... args) { cursor.updatePosition(args...); });
+
+    mouseButtonCallbacks.push_back([&cursor](auto button, auto action) {
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+            cursor.onLeftClick();
+    });
 
     // render loop
     // -----------
@@ -184,4 +193,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 
     for (auto& callback : mouseCallbacks)
         callback(xoffset, yoffset);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    for (auto& callback : mouseButtonCallbacks)
+        callback(button, action);
 }

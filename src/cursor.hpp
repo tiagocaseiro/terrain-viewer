@@ -11,6 +11,13 @@ class Cursor {
         position_.z += (-zoffset * speed_);
     }
 
+    void setOnLeftClick(std::function<void(void)> callable) { onLeftClickCallback_ = callable; }
+
+    void onLeftClick() const {
+        if (onLeftClickCallback_)
+            onLeftClickCallback_();
+    }
+
     auto getPosition() const { return position_; }
 
     auto getColor() const { return color_; }
@@ -22,4 +29,5 @@ class Cursor {
     glm::vec3 color_;
     glm::vec3 position_;
     Shape shape_;
+    std::function<void(void)> onLeftClickCallback_;
 };
