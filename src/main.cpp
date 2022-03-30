@@ -86,11 +86,9 @@ int main(int argv, char* argc[]) {
 
     Camera camera({0.0f, 3.0f, 10.0f}, {0.0f, 1.0f, 0.0f}, -90.f, -20.0f);
     Cursor cursor(Circle{50, 0.5}, 0.03, {0.79f, 0.071f, 0.13f});
-    Grid grid(10, 10);
+    Grid<10, 10> grid;
     Shader shader("shaders/default.vs", "shaders/default.fs");
     Shader wireframe_shader("shaders/default.vs", "shaders/default.fs", "shaders/wireframe.gs");
-
-    cursor.setOnLeftClick([&grid, &cursor]() { auto position = cursor.getPosition(); });
 
     auto projection = glm::perspective(
         glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
