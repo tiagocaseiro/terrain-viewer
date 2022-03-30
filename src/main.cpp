@@ -106,8 +106,7 @@ int main(int argv, char* argc[]) {
     mouseCallbacks.push_back([&cursor](auto... args) { cursor.updatePosition(args...); });
 
     mouseButtonCallbacks.push_back([&cursor](auto button, auto action) {
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-            cursor.onLeftClick();
+
     });
 
     // render loop
