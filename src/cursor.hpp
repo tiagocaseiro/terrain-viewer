@@ -22,5 +22,4 @@ class Cursor {
     glm::vec3 color_;
     glm::vec3 position_;
     Shape shape_;
-    std::function<void(void)> onLeftClickCallback_;
 };
