@@ -14,9 +14,9 @@
 #include "learnopengl/shader.hpp"
 
 #include "circle.hpp"
-#include "common.hpp"
 #include "cursor.hpp"
-#include "grid.hpp"
+#include "editor.hpp"
+
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -85,29 +85,31 @@ int main(int argv, char* argc[]) {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     Camera camera({0.0f, 3.0f, 10.0f}, {0.0f, 1.0f, 0.0f}, -90.f, -20.0f);
-    Cursor cursor(Circle{50, 0.5}, 0.03, {0.79f, 0.071f, 0.13f});
-    Grid<10, 10> grid;
-    Shader shader("shaders/default.vs", "shaders/default.fs");
-    Shader wireframe_shader("shaders/default.vs", "shaders/default.fs", "shaders/wireframe.gs");
+    Shader cursor_shader("shaders/default.vs", "shaders/default.fs");
+    Shader triangle_shader("shaders/triangle.vs", "shaders/default.fs");
+    Shader wireframe_shader("shaders/triangle.vs", "shaders/default.fs", "shaders/wireframe.gs");
+    Editor editor(10, 10, Cursor<Circle>({50, 0.5}, 0.03, {0.79f, 0.071f, 0.13f}));
 
     auto projection = glm::perspective(
         glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     // auto projection = glm::ortho(-4.f, 4.f, -3.f, 3.f, 0.1f, 100.0f);
 
-    shader.use();
-    shader.set("projection", projection);
-    shader.set("view", camera.GetViewMatrix());
+    cursor_shader.use();
+    cursor_shader.set("projection", projection);
+    cursor_shader.set("view", camera.GetViewMatrix());
+
+    triangle_shader.use();
+    triangle_shader.set("projection", projection);
+    triangle_shader.set("view", camera.GetViewMatrix());
 
     wireframe_shader.use();
     wireframe_shader.set("projection", projection);
     wireframe_shader.set("view", camera.GetViewMatrix());
 
     mouseCallbacks.push_back([&camera](auto... args) { camera.ProcessMouseMovement(args...); });
-    mouseCallbacks.push_back([&cursor](auto... args) { cursor.updatePosition(args...); });
+    mouseCallbacks.push_back([&editor](auto... args) { editor.onMouseMovement(args...); });
 
-    mouseButtonCallbacks.push_back([&cursor](auto button, auto action) {
-
-    });
+    mouseButtonCallbacks.push_back([&editor](auto... args) { editor.onMouseButton(args...); });
 
     // render loop
     // -----------
@@ -124,26 +126,7 @@ int main(int argv, char* argc[]) {
         glClearColor(0.0f, 0.0f, 0.5f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        shader.use();
-        shader.set("color", glm::vec3{1.0f});
-        shader.set("model", glm::mat4(1.0f));
-        grid.draw();
-
-        glDepthFunc(GL_ALWAYS);
-        wireframe_shader.use();
-        wireframe_shader.set("color", glm::vec3{0.0f});
-        wireframe_shader.set("model", glm::mat4(1.0f));
-        grid.draw();
-        glDepthFunc(GL_LESS);
-
-        glDepthFunc(GL_ALWAYS);
-        shader.use();
-        auto cursor_model = glm::translate(glm::mat4(1.0f), cursor.getPosition());
-        cursor_model      = glm::rotate(cursor_model, glm::radians(90.f), {1.0f, 0.0f, 0.0f});
-        shader.set("model", cursor_model);
-        shader.set("color", cursor.getColor());
-        cursor.draw();
-        glDepthFunc(GL_LESS);
+        editor.draw(triangle_shader, wireframe_shader, cursor_shader);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
