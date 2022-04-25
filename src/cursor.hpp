@@ -1,10 +1,9 @@
 #pragma once
 
-template <typename Shape>
 class Cursor {
   public:
-    explicit Cursor(Shape shape, float speed, glm::vec3 color)
-      : speed_{speed}, color_{std::move(color)}, position_{}, shape_{std::move(shape)} {}
+    explicit Cursor(float speed, glm::vec3 color, float radius)
+      : speed_{speed}, color_{std::move(color)}, position_{}, radius_{radius} {}
 
     void updatePosition(float xoffset, float zoffset) {
         position_.x += (xoffset * speed_);
@@ -15,11 +14,11 @@ class Cursor {
 
     auto getColor() const { return color_; }
 
-    void draw() const { shape_.draw(); }
+    auto getRadius() const { return radius_; }
 
   private:
     float speed_;
     glm::vec3 color_;
     glm::vec3 position_;
-    Shape shape_;
+    float radius_;
 };

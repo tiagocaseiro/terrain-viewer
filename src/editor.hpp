@@ -1,36 +1,42 @@
 #pragma once
 
+#include <algorithm>
 #include <filesystem>
 #include <thread>
 
+#include "cursor.hpp"
 #include "grid.hpp"
 
-static auto GenerateHeightMap(uint32_t width, uint32_t height, const glm::mat4& model) {
-    auto vertices = Grid::GenerateVertices(width, height);
-    for (auto& v : vertices) {
-        auto n = glm::vec4(v.x, v.y, v.z, 1.0f) * model;
-        v.x    = n.x;
-        v.y    = n.y;
-        v.z    = n.z;
-    }
-    return vertices;
-}
-
-template <typename Shape>
 class Editor {
   public:
-    Editor(uint32_t width, uint32_t height, Cursor<Shape> cursor, glm::mat4 model = glm::mat4(1.0f))
-      : vertices_{GenerateHeightMap(width, height, model)}, width_{width}, height_{height},
-        grid_{width, height, vertices_, Grid::GenerateIndices(width, height)}, cursor_{cursor} {}
+    Editor(uint32_t width, uint32_t height, Cursor cursor)
+      : width_{width}, height_{height}, cursor_{cursor}, vertices_{Grid::GenerateVertices(
+                                                             width,
+                                                             height)},
+        grid_{width, height, vertices_, Grid::GenerateIndices(width, height)} {}
 
-    auto onMouseMovement(float xoffset, float zoffset) { cursor_.updatePosition(xoffset, zoffset); }
+    auto updateCursor(float xoffset, float zoffset) { cursor_.updatePosition(xoffset, zoffset); }
 
-    auto onMouseButton(int button, int action) {
-        // if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-        //     vertices_[0].y += increment_;
-        //     grid_ = {width_, height_, vertices_, Grid::GenerateIndices(width_, height_)};
-        // }
+    void set() {
+        for (auto& vertex_position : vertices_) {
+            auto y            = vertex_position.y;
+            vertex_position.y = {};
+            if (auto diff = glm::length(cursor_.getPosition() - vertex_position);
+                diff <= cursor_.getRadius()) {
+                y = value_;
+            }
+            vertex_position.y = y;
+        }
+        grid_ = {width_, height_, vertices_, Grid::GenerateIndices(width_, height_)};
     }
+
+    void increment(float increment) {
+        value_ += increment;
+        value_ = std::max(min_, value_);
+        value_ = std::min(max_, value_);
+    }
+
+    void reset() { value_ = {}; }
 
     auto draw(Shader triangle_shader, Shader wireframe_shader, Shader cursor_shader) {
         triangle_shader.use();
@@ -38,20 +44,18 @@ class Editor {
         triangle_shader.set("model", glm::mat4(1.0f));
         grid_.draw();
 
-        glDepthFunc(GL_ALWAYS);
         wireframe_shader.use();
         wireframe_shader.set("color", glm::vec3{0.0f});
-        wireframe_shader.set("model", glm::mat4(1.0f));
+        wireframe_shader.set("model", glm::translate(glm::mat4(1.0f), glm::vec3(0.0, 0.006, 0.0)));
         grid_.draw();
-        glDepthFunc(GL_LESS);
 
         glDepthFunc(GL_ALWAYS);
         cursor_shader.use();
-        auto cursor_model = glm::translate(glm::mat4(1.0f), cursor_.getPosition());
-        cursor_model      = glm::rotate(cursor_model, glm::radians(90.f), {1.0f, 0.0f, 0.0f});
-        cursor_shader.set("model", cursor_model);
         cursor_shader.set("color", cursor_.getColor());
-        cursor_.draw();
+        cursor_shader.set("radius", cursor_.getRadius());
+        cursor_shader.set("grid_model", glm::mat4(1.0f));
+        cursor_shader.set("cursor_model", glm::translate(glm::mat4(1.0f), cursor_.getPosition()));
+        grid_.draw();
         glDepthFunc(GL_LESS);
     }
 
@@ -62,13 +66,12 @@ class Editor {
     }
 
   private:
-    std::vector<glm::vec3> vertices_;
     uint32_t width_;
     uint32_t height_;
+    Cursor cursor_;
+    std::vector<glm::vec3> vertices_;
     Grid grid_;
-    Cursor<Shape> cursor_;
-    glm::mat4 model_;
-    float increment_ = 0.05f;
-    float max_       = 10.f;
-    float min_       = -10.f;
+    float value_ = 0.0f;
+    float max_   = 10.f;
+    float min_   = -10.f;
 };
