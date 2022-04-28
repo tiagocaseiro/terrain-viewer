@@ -1,93 +1,56 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
-
+#include <utility>
 
 class Shader {
   public:
     unsigned int ID;
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
-    Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr) {
-        // 1. retrieve the vertex/fragment source code from filePath
-        std::string vertexCode;
-        std::string fragmentCode;
-        std::string geometryCode;
-        std::ifstream vShaderFile;
-        std::ifstream fShaderFile;
-        std::ifstream gShaderFile;
-        // ensure ifstream objects can throw exceptions:
-        vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        try {
-            // open files
-            vShaderFile.open(vertexPath);
-            fShaderFile.open(fragmentPath);
-            std::stringstream vShaderStream, fShaderStream;
-            // read file's buffer contents into streams
-            vShaderStream << vShaderFile.rdbuf();
-            fShaderStream << fShaderFile.rdbuf();
-            // close file handlers
-            vShaderFile.close();
-            fShaderFile.close();
-            // convert stream into string
-            vertexCode   = vShaderStream.str();
-            fragmentCode = fShaderStream.str();
-            // if geometry shader path is present, also load a geometry shader
-            if (geometryPath != nullptr) {
-                gShaderFile.open(geometryPath);
-                std::stringstream gShaderStream;
-                gShaderStream << gShaderFile.rdbuf();
-                gShaderFile.close();
-                geometryCode = gShaderStream.str();
-            }
-        } catch (std::ifstream::failure& e) {
-            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
-        }
-        const char* vShaderCode = vertexCode.c_str();
-        const char* fShaderCode = fragmentCode.c_str();
-        // 2. compile shaders
-        unsigned int vertex, fragment;
-        // vertex shader
-        vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, &vShaderCode, NULL);
-        glCompileShader(vertex);
-        checkCompileErrors(vertex, "VERTEX");
-        // fragment Shader
-        fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &fShaderCode, NULL);
-        glCompileShader(fragment);
-        checkCompileErrors(fragment, "FRAGMENT");
-        // if geometry shader is given, compile geometry shader
-        unsigned int geometry;
-        if (geometryPath != nullptr) {
-            const char* gShaderCode = geometryCode.c_str();
-            geometry                = glCreateShader(GL_GEOMETRY_SHADER);
-            glShaderSource(geometry, 1, &gShaderCode, NULL);
-            glCompileShader(geometry);
-            checkCompileErrors(geometry, "GEOMETRY");
-        }
-        // shader Program
+    Shader(
+        std::filesystem::path vertexPath,
+        std::filesystem::path fragmentPath,
+        std::filesystem::path geometryPath              = {},
+        std::filesystem::path tessellationControlPath   = {},
+        std::filesystem::path tesselationEvaluationPath = {}) {
         ID = glCreateProgram();
-        glAttachShader(ID, vertex);
-        glAttachShader(ID, fragment);
-        if (geometryPath != nullptr)
-            glAttachShader(ID, geometry);
+        for (auto& [type, name, path] :
+             {std::tuple{GL_VERTEX_SHADER, "VERTEX", vertexPath},
+              {GL_FRAGMENT_SHADER, "FRAGMENT", fragmentPath},
+              {GL_GEOMETRY_SHADER, "GEOMETRY", geometryPath},
+              {GL_TESS_EVALUATION_SHADER, "TESSELLATION CONTROL", tessellationControlPath},
+              {GL_TESS_CONTROL_SHADER, "TESSELLATION EVALUATION", tesselationEvaluationPath}}) {
+            if (!std::empty(path)) {
+                auto code = std::string();
+                try {
+                    std::ifstream file(path);
+                    file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+                    std::stringstream ss;
+                    ss << file.rdbuf();
+                    code = ss.str();
+                } catch (std::ifstream::failure& ex) {
+                    std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+                    std::cout << ex.what() << std::endl;
+                }
+                auto code_c_str = code.c_str();
+                auto shader     = glCreateShader(type);
+                glShaderSource(shader, 1, &code_c_str, NULL);
+                glCompileShader(shader);
+                checkCompileErrors(shader, name);
+                glAttachShader(ID, shader);
+                glDeleteShader(shader);
+            }
+        }
         glLinkProgram(ID);
         checkCompileErrors(ID, "PROGRAM");
-        // delete the shaders as they're linked into our program now and no longer necessery
-        glDeleteShader(vertex);
-        glDeleteShader(fragment);
-        if (geometryPath != nullptr)
-            glDeleteShader(geometry);
     }
     // activate the shader
     // ------------------------------------------------------------------------
@@ -166,4 +129,3 @@ class Shader {
         }
     }
 };
-#endif
