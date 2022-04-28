@@ -26,8 +26,8 @@ class Shader {
              {std::tuple{GL_VERTEX_SHADER, "VERTEX", vertexPath},
               {GL_FRAGMENT_SHADER, "FRAGMENT", fragmentPath},
               {GL_GEOMETRY_SHADER, "GEOMETRY", geometryPath},
-              {GL_TESS_EVALUATION_SHADER, "TESSELLATION CONTROL", tessellationControlPath},
-              {GL_TESS_CONTROL_SHADER, "TESSELLATION EVALUATION", tesselationEvaluationPath}}) {
+              {GL_TESS_CONTROL_SHADER, "TESSELLATION CONTROL", tessellationControlPath},
+              {GL_TESS_EVALUATION_SHADER, "TESSELLATION EVALUATION", tesselationEvaluationPath}}) {
             if (!std::empty(path)) {
                 auto code = std::string();
                 try {
